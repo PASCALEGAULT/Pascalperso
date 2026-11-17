@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bonne fête Maxime Legault ! 🎂</title>
+<style>
+  /* ====== BASE ====== */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: #fff;
+    background: #0f0c29;
+  }
+
+  /* ====== 1. VIDÉO CACHÉE (z-index 0) ====== */
+  #video-wrap {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(640px, 90vw);
+    aspect-ratio: 16 / 9;
+    z-index: 0;
+  }
+  #video-wrap iframe { width: 100%; height: 100%; border: 0; border-radius: 12px; }
+
+  /* ====== SCÈNE OPAQUE (z-index 5) ====== */
+  #scene {
+    position: fixed; inset: 0;
+    z-index: 5;
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    transition: opacity 0.4s ease;
+  }
+  /* Mode « aperçu » : la scène devient presque transparente
+     et laisse passer les clics vers la vidéo */
+  body.peek #scene   { opacity: 0.15; pointer-events: none; }
+  body.peek #card    { opacity: 0.25; pointer-events: none; }
+  body.peek #peek-btn{ pointer-events: auto; opacity: 1; }
+
+  /* ====== CANVAS CONFETTIS (z-index 8) ====== */
+  #confetti {
+    position: fixed; inset: 0;
+    width: 100%; height: 100%;
+    z-index: 8;
+    pointer-events: none;
+  }
+
+  /* ====== ÉMOJIS FLOTTANTS (dans la scène, z-index 6) ====== */
+  #floaters {
+    position: fixed; inset: 0;
+    z-index: 6;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .floater {
+    position: absolute;
+    bottom: -80px;
+    animation: floatUp linear forwards;
+    will-change: transform;
+  }
+  @keyframes floatUp {
+    0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+    10%  { opacity: 1; }
+    50%  { transform: translate(var(--sway), -55vh) rotate(var(--rot)); }
+    100% { transform: translate(0, -115vh) rotate(0deg); opacity: 0.9; }
+  }
+
+  /* ====== 3. CARTE GLASSMORPHISM (z-index 10) ====== */
+  #card {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    width: min(560px, 92vw);
+    max-height: 94vh;
+    overflow-y: auto;
+    padding: 28px 26px 18px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 2px solid #ffde59;
+    border-radius: 24px;
+    box-shadow:
+      0 0 18px rgba(255, 222, 89, 0.55),
+      0 0 50px rgba(255, 222, 89, 0.2),
+      inset 0 0 25px rgba(255, 255, 255, 0.05);
+    transition: opacity 0.4s ease;
+  }
+
+  #cake {
+    font-size: 72px;
+    cursor: pointer;
+    display: inline-block;
+    user-select: none;
+    transition: transform 0.15s ease;
+    filter: drop-shadow(0 0 12px rgba(255, 222, 89, 0.6));
+  }
+  #cake:hover  { transform: scale(1.12) rotate(-6deg); }
+  #cake:active { transform: scale(0.92); }
+  .hint { font-size: 12px; opacity: 0.6; margin-top: -4px; }
+
+  h1 {
+    font-size: clamp(38px, 9vw, 64px);
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #ffde59;
+    text-shadow: 3px 3px 0 #e63946, 6px 6px 0 #7b2cbf;
+    margin: 10px 0 4px;
+    animation: bounce 1.4s ease-in-out infinite;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-10px); }
+  }
+
+  #name {
+    font-size: clamp(24px, 6vw, 36px);
+    font-weight: 700;
+    color: #00f5ff;
+    animation: pulse 1.8s ease-in-out infinite;
+    margin-bottom: 18px;
+  }
+  @keyframes pulse {
+    0%, 100% { text-shadow: 0 0 6px #00f5ff, 0 0 12px #00f5ff; transform: scale(1); }
+    50%      { text-shadow: 0 0 14px #00f5ff, 0 0 32px #00b4d8; transform: scale(1.05); }
+  }
+
+  /* ====== BOÎTE KARAOKÉ ====== */
+  #lyrics {
+    min-height: 130px;
+    padding: 16px 14px;
+    margin-bottom: 14px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 222, 89, 0.35);
+    border-radius: 16px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  #lyric-line {
+    font-size: clamp(17px, 4.2vw, 22px);
+    font-weight: 700;
+    line-height: 1.35;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+  #lyric-stage {
+    margin-top: 8px;
+    font-style: italic;
+    font-size: 14px;
+    color: #ffb4c8;
+    transition: opacity 0.35s ease;
+  }
+  .fade-out { opacity: 0; transform: translateY(8px); }
+
+  #progress {
+    height: 6px;
+    margin-top: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  #progress-bar {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, #ffde59, #ff6b9d, #00f5ff);
+    transition: width 0.1s linear;
+  }
+
+  /* ====== BOUTONS ====== */
+  #start-btn {
+    font-size: 18px;
+    font-weight: 800;
+    padding: 14px 26px;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    color: #24243e;
+    background: linear-gradient(90deg, #ffde59, #ff9f43);
+    box-shadow: 0 6px 20px rgba(255, 159, 67, 0.5);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  #start-btn:hover  { transform: translateY(-2px) scale(1.03); box-shadow: 0 10px 28px rgba(255, 159, 67, 0.7); }
+  #start-btn:active { transform: scale(0.97); }
+
+  #peek-btn {
+    display: block;
+    margin: 16px auto 0;
+    font-size: 11px;
+    padding: 5px 12px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    cursor: pointer;
+  }
+  #peek-btn:hover { color: #fff; border-color: rgba(255, 255, 255, 0.5); }
+</style>
+</head>
+<body>
+
+  <!-- 1. Vidéo YouTube cachée (z-index 0)
+       enablejsapi=1 est OBLIGATOIRE pour que postMessage fonctionne -->
+  <div id="video-wrap">
+    <iframe id="yt"
+      src="https://www.youtube.com/embed/SfzxsGcbsjs?enablejsapi=1&playsinline=1&rel=0&controls=1"
+      title="C'est ta fête"
+      allow="autoplay; encrypted-media; picture-in-picture"
+      allowfullscreen></iframe>
+  </div>
+
+  <!-- Scène opaque qui cache la vidéo (z-index 5) -->
+  <div id="scene"></div>
+
+  <!-- Émojis flottants (z-index 6) -->
+  <div id="floaters"></div>
+
+  <!-- Canvas confettis (z-index 8) -->
+  <canvas id="confetti"></canvas>
+
+  <!-- Carte festive (z-index 10) -->
+  <div id="card">
+    <div id="cake" title="Clique-moi !">🎂</div>
+    <div class="hint">(clique sur le gâteau !)</div>
+
+    <h1>BONNE FÊTE !</h1>
+    <div id="name">Maxime Legault</div>
+
+    <div id="lyrics">
+      <div id="lyric-line">🎤 Prêt pour ton karaoké de fête ?</div>
+      <div id="lyric-stage">(Le public retient son souffle)</div>
+      <div id="progress"><div id="progress-bar"></div></div>
+    </div>
+
+    <button id="start-btn">Lancer la fête &amp; la musique 🎉</button>
+    <button id="peek-btn">Apercevoir l'encadré vidéo</button>
+  </div>
+
+<script>
+/* =========================================================
+   CONFIGURATION
+   ========================================================= */
+const SONG_DURATION = 41; // secondes
+
+const LYRICS = [
+  { t: 0.0,  text: "C'est ta fête Maxime Legault ! 🎶",
+             stage: "(Gros sourire fixe devant la caméra)" },
+  { t: 4.5,  text: "C'est ta fête aujourd'hui, pis on est ben contents que tu sois né ! 🎂",
+             stage: "(Enthousiasme légèrement excessif)" },
+  { t: 10.5, text: "On t'a acheté un gâteau au St-Hubert de Ville d'Anjou... 🍗🍰",
+             stage: "(Clin d'œil officiel à Pierre-Yves)" },
+  { t: 16.5, text: "Mais y'avait pu de châteaux-forts faque on a pris une tarte au sucre ! 🥧",
+             stage: "(Regard dramatique vers l'horizon)" },
+  { t: 23.0, text: "Souffle tes chandelles avant que la cire ruine le glaçage ! 🕯️💨",
+             stage: "(Crescendo musical intense)" },
+  { t: 30.0, text: "C'EST TA FÊTE MAXIME ! ON T'AIME BEAUCOUP ! 🎉🥳",
+             stage: "(Explosion finale de confettis !)", finale: true }
+];
+
+const FLOAT_EMOJIS = ["🎈", "🎈", "🎉", "🥳", "🎁", "✨", "🍰", "🍗"];
+const CONFETTI_COLORS = ["#ffde59", "#ff6b9d", "#00f5ff", "#7b2cbf", "#e63946", "#06d6a0", "#ff9f43"];
+
+/* =========================================================
+   RÉFÉRENCES DOM
+   ========================================================= */
+const iframe    = document.getElementById("yt");
+const lyricLine = document.getElementById("lyric-line");
+const lyricStg  = document.getElementById("lyric-stage");
+const bar       = document.getElementById("progress-bar");
+const startBtn  = document.getElementById("start-btn");
+const peekBtn   = document.getElementById("peek-btn");
+const cake      = document.getElementById("cake");
+const floaters  = document.getElementById("floaters");
+
+/* =========================================================
+   2. COMMANDE YOUTUBE VIA postMessage
+   ========================================================= */
+function ytCommand(func) {
+  if (!iframe.contentWindow) return;
+  iframe.contentWindow.postMessage(
+    JSON.stringify({ event: "command", func: func, args: "" }), "*"
+  );
+}
+// Le lecteur YouTube n'écoute qu'après avoir reçu un message "listening".
+iframe.addEventListener("load", () => {
+  iframe.contentWindow.postMessage(JSON.stringify({ event: "listening", id: "yt" }), "*");
+});
+
+/* =========================================================
+   KARAOKÉ SYNCHRONISÉ
+   ========================================================= */
+let partyRunning = false;
+let startTime = 0;
+let currentIndex = -1;
+let rafId = null;
+
+function showLyric(i) {
+  const l = LYRICS[i];
+  lyricLine.classList.add("fade-out");
+  lyricStg.style.opacity = 0;
+  setTimeout(() => {
+    lyricLine.textContent = l.text;
+    lyricStg.textContent  = l.stage;
+    lyricLine.classList.remove("fade-out");
+    lyricStg.style.opacity = 1;
+  }, 300);
+
+  // Petite rafale à chaque ligne, grosse explosion à la finale
+  if (l.finale) {
+    for (let k = 0; k < 5; k++) setTimeout(() => burst(randX(), randY(), 140), k * 350);
+    for (let k = 0; k < 14; k++) setTimeout(spawnFloater, k * 120);
+  } else {
+    burst(window.innerWidth / 2, window.innerHeight * 0.35, 50);
+  }
+}
+
+function tick() {
+  const elapsed = (performance.now() - startTime) / 1000;
+
+  // Barre de progression
+  bar.style.width = Math.min(100, (elapsed / SONG_DURATION) * 100) + "%";
+
+  // Trouve la ligne qui correspond au temps écoulé
+  let idx = -1;
+  for (let i = 0; i < LYRICS.length; i++) {
+    if (elapsed >= LYRICS[i].t) idx = i;
+  }
+  if (idx !== currentIndex && idx >= 0) {
+    currentIndex = idx;
+    showLyric(idx);
+  }
+
+  if (elapsed < SONG_DURATION) {
+    rafId = requestAnimationFrame(tick);
+  } else {
+    endParty();
+  }
+}
+
+function startParty() {
+  if (partyRunning) return;
+  partyRunning = true;
+
+  // Musique : on renvoie la commande quelques fois au cas où le lecteur
+  // n'était pas encore prêt au premier envoi.
+  ytCommand("playVideo");
+  setTimeout(() => ytCommand("playVideo"), 400);
+  setTimeout(() => ytCommand("playVideo"), 1200);
+
+  startBtn.textContent = "🎶 La fête est lancée !";
+  startBtn.disabled = true;
+  startBtn.style.opacity = 0.7;
+
+  startTime = performance.now();
+  currentIndex = -1;
+  rafId = requestAnimationFrame(tick);
+
+  burst(window.innerWidth / 2, window.innerHeight / 2, 120);
+  floatRate = 350; // plus de ballons pendant la chanson
+}
+
+function endParty() {
+  partyRunning = false;
+  floatRate = 1100;
+  startBtn.textContent = "Rejouer la fête 🔁";
+  startBtn.disabled = false;
+  startBtn.style.opacity = 1;
+  // Pour rejouer depuis le début
+  startBtn.onclick = () => {
+    iframe.contentWindow.postMessage(
+      JSON.stringify({ event: "command", func: "seekTo", args: [0, true] }), "*"
+    );
+    startParty();
+  };
+}
+
+startBtn.onclick = startParty;
+
+/* =========================================================
+   BOUTON « APERCEVOIR L'ENCADRÉ VIDÉO »
+   ========================================================= */
+peekBtn.addEventListener("click", () => {
+  const on = document.body.classList.toggle("peek");
+  peekBtn.textContent = on ? "Cacher l'encadré vidéo" : "Apercevoir l'encadré vidéo";
+});
+
+/* =========================================================
+   GÂTEAU CLIQUABLE
+   ========================================================= */
+cake.addEventListener("click", (e) => {
+  const r = cake.getBoundingClientRect();
+  burst(r.left + r.width / 2, r.top + r.height / 2, 90);
+  for (let k = 0; k < 6; k++) setTimeout(spawnFloater, k * 100);
+});
+
+/* =========================================================
+   4a. CONFETTIS (canvas, gravité + rotation)
+   ========================================================= */
+const canvas = document.getElementById("confetti");
+const ctx = canvas.getContext("2d");
+let particles = [];
+
+function resize() {
+  canvas.width  = window.innerWidth  * devicePixelRatio;
+  canvas.height = window.innerHeight * devicePixelRatio;
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+}
+window.addEventListener("resize", resize);
+resize();
+
+const randX = () => Math.random() * window.innerWidth;
+const randY = () => Math.random() * window.innerHeight * 0.6;
+
+function burst(x, y, count) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 4 + Math.random() * 9;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 4,     // petite poussée vers le haut
+      w: 6 + Math.random() * 6,
+      h: 4 + Math.random() * 6,
+      rot: Math.random() * Math.PI * 2,
+      vr: (Math.random() - 0.5) * 0.35,
+      color: CONFETTI_COLORS[(Math.random() * CONFETTI_COLORS.length) | 0],
+      life: 0,
+      maxLife: 160 + Math.random() * 80
+    });
+  }
+}
+
+function drawConfetti() {
+  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.vy += 0.22;          // gravité
+    p.vx *= 0.985;         // friction de l'air
+    p.vy *= 0.985;
+    p.x  += p.vx;
+    p.y  += p.vy;
+    p.rot += p.vr;
+    p.life++;
+
+    const alpha = 1 - p.life / p.maxLife;
+    if (alpha <= 0 || p.y > window.innerHeight + 30) {
+      particles.splice(i, 1);
+      continue;
+    }
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.fillStyle = p.color;
+    // Effet « papier qui tourne » : on écrase la largeur selon la rotation
+    ctx.fillRect(-p.w / 2, -p.h / 2, p.w * Math.cos(p.rot * 2), p.h);
+    ctx.restore();
+  }
+  requestAnimationFrame(drawConfetti);
+}
+drawConfetti();
+
+/* =========================================================
+   4b. ÉMOJIS QUI FLOTTENT DE BAS EN HAUT (en continu)
+   ========================================================= */
+let floatRate = 1100; // ms entre deux émojis (réduit pendant la chanson)
+
+function spawnFloater() {
+  const el = document.createElement("div");
+  el.className = "floater";
+  el.textContent = FLOAT_EMOJIS[(Math.random() * FLOAT_EMOJIS.length) | 0];
+  const size = 26 + Math.random() * 30;
+  const dur  = 7 + Math.random() * 6;
+  el.style.left = Math.random() * 96 + "vw";
+  el.style.fontSize = size + "px";
+  el.style.animationDuration = dur + "s";
+  el.style.setProperty("--sway", (Math.random() * 120 - 60) + "px");
+  el.style.setProperty("--rot",  (Math.random() * 40 - 20) + "deg");
+  floaters.appendChild(el);
+  setTimeout(() => el.remove(), dur * 1000 + 200);
+}
+
+(function floatLoop() {
+  spawnFloater();
+  setTimeout(floatLoop, floatRate);
+})();
+</script>
+</body>
+</html>
